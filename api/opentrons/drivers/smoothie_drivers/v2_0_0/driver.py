@@ -344,6 +344,8 @@ class SmoothieDriver_2_0_0(SmoothieDriver):
             # except RuntimeWarning as e:
             #     raise e
             except Exception as e:
+                if str(e) == 'Robot Error: limit switch hit':
+                    raise e
                 first_seen_exception = first_seen_exception or e
                 reconnect_delay = attempts ** 2
                 log.exception(
