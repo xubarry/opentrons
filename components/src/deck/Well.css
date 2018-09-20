@@ -20,7 +20,8 @@
   fill: color(var(--c-highlight) alpha(20%));
 }
 
-.highlighted {
+.well_border:hover:not(.selected),
+.highlighted:not(.selected) {
   stroke-width: 1;
   stroke: var(--c-highlight);
   fill: transparent;

@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react'
-
+import throttle from 'lodash/throttle'
 import styles from './SelectionRect.css'
 import type {DragRect, GenericRect} from '../collision-types'
 
@@ -13,6 +13,7 @@ type Props = {
 
 type State = {
   positions: DragRect | null,
+  isSelecting: boolean,
 }
 
 class SelectionRect extends React.Component<Props, State> {
@@ -22,7 +23,16 @@ class SelectionRect extends React.Component<Props, State> {
 
   constructor (props: Props) {
     super(props)
-    this.state = { positions: null }
+    this.state = { positions: null, isSelecting: false }
+    // this.throttledHandleDrag = throttle(this.handleDrag, 100)
+
+    document.addEventListener('mousemove', this.handleMouseMove)
+    document.addEventListener('mouseup', this.handleMouseUp)
+  }
+
+  componentWillUnmount () {
+    document.addEventListener('mousemove', this.handleMouseMove)
+    document.addEventListener('mouseup', this.handleMouseUp)
   }
 
   renderRect (args: DragRect) {
@@ -79,9 +89,14 @@ class SelectionRect extends React.Component<Props, State> {
   }
 
   handleMouseDown = (e: MouseEvent) => {
-    document.addEventListener('mousemove', this.handleDrag)
-    document.addEventListener('mouseup', this.handleMouseUp)
-    this.setState({ positions: {xStart: e.clientX, xDynamic: e.clientX, yStart: e.clientY, yDynamic: e.clientY} })
+    this.setState({
+      positions: {xStart: e.clientX, xDynamic: e.clientX, yStart: e.clientY, yDynamic: e.clientY},
+      isSelecting: true,
+    })
+  }
+
+  handleMouseMove = (e: MouseEvent) => {
+    if (this.state.isSelecting) this.handleDrag(e)
   }
 
   handleDrag = (e: MouseEvent) => {
@@ -93,16 +108,12 @@ class SelectionRect extends React.Component<Props, State> {
   }
 
   handleMouseUp = (e: MouseEvent) => {
-    if (!(e instanceof MouseEvent)) {
-      return
-    }
-    document.removeEventListener('mousemove', this.handleDrag)
-    document.removeEventListener('mouseup', this.handleMouseUp)
+    if (!(e instanceof MouseEvent)) return
 
     const finalRect = this.state.positions && this.getRect(this.state.positions)
 
     // clear the rectangle
-    this.setState({ positions: null })
+    this.setState({ positions: null, isSelecting: false })
 
     // call onSelectionDone callback with {x0, x1, y0, y1} of final selection rectangle
     this.props.onSelectionDone && finalRect && this.props.onSelectionDone(e, finalRect)
@@ -110,16 +121,15 @@ class SelectionRect extends React.Component<Props, State> {
 
   render () {
     const { svg, children } = this.props
-
-    return svg
-      ? <g onMouseDown={this.handleMouseDown} ref={ref => { this.parentRef = ref }}>
+    const WellElement = svg ? 'g' : 'div'
+    return (
+      <WellElement
+        onMouseDown={this.handleMouseDown}
+        ref={ref => { this.parentRef = ref }}>
         {children}
         {this.state.positions && this.renderRect(this.state.positions)}
-      </g>
-      : <div onMouseDown={this.handleMouseDown} ref={ref => { this.parentRef = ref }}>
-        {this.state.positions && this.renderRect(this.state.positions)}
-        {children}
-      </div>
+      </WellElement>
+    )
   }
 }
 

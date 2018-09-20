@@ -206,15 +206,15 @@ function mergeProps (stateProps: SP, dispatchProps: DP, ownProps: OP): Props {
       }
     },
 
-    makeOnMouseOverWell: (well: string) => (e: SyntheticMouseEvent<*>) => {
-      if (!e.shiftKey) {
-        const hoveredWell = {[well]: well}
-        dispatch(highlightWells(_wellsFromSelected(hoveredWell)))
-      }
-    },
-    onMouseExitWell: () => dispatch(
-      highlightWells(_wellsFromSelected({})) // TODO more convenient way to de-highlight
-    ),
+    // makeOnMouseOverWell: (well: string) => (e: SyntheticMouseEvent<*>) => {
+    //   if (!e.shiftKey) {
+    //     const hoveredWell = {[well]: well}
+    //     dispatch(highlightWells(_wellsFromSelected(hoveredWell)))
+    //   }
+    // },
+    // onMouseExitWell: () => dispatch(
+    //   highlightWells(_wellsFromSelected({})) // TODO more convenient way to de-highlight
+    // ),
   }
 }
 
