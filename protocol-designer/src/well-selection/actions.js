@@ -32,6 +32,11 @@ export const deselectWells = createAction(
   _wellSelectPayloadMapper
 )
 
+export const updateSelectedWells = createAction(
+  'UPDATE_SELECTED_WELLS',
+  _wellSelectPayloadMapper
+)
+
 // Well selection modal
 export type OpenWellSelectionModalPayload = {
   labwareId: string,

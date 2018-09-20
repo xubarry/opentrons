@@ -2,6 +2,7 @@
 // Wrap Plate with a SelectionRect.
 import * as React from 'react'
 import omit from 'lodash/omit'
+import reduce from 'lodash/reduce'
 import {
   swatchColors,
   Labware,
@@ -14,8 +15,7 @@ import {getCollidingWells} from '../utils'
 import {SELECTABLE_WELL_CLASS} from '../constants'
 import {getWellSetForMultichannel} from '../well-selection/utils'
 import SelectionRect from '../components/SelectionRect.js'
-import type {ContentsByWell} from '../labware-ingred/types'
-import type {RectEvent} from '../collision-types'
+import type {ContentsByWell, Wells} from '../labware-ingred/types'
 
 type LabwareProps = React.ElementProps<typeof Labware>
 
@@ -23,13 +23,9 @@ export type Props = {
   wellContents: ContentsByWell,
   getTipProps?: $PropertyType<LabwareProps, 'getTipProps'>,
   containerType: string,
+  updateSelectedWells: (Wells) => mixed,
 
   selectable?: boolean,
-  makeOnMouseOverWell?: (well: string) => (e: SyntheticMouseEvent<*>) => mixed,
-  onMouseExitWell?: (e: SyntheticMouseEvent<*>) => mixed,
-
-  onSelectionMove: RectEvent,
-  onSelectionDone: RectEvent,
 
   // used by container
   containerId: string,
@@ -50,7 +46,13 @@ function getFillColor (groupIds: Array<string>): ?string {
 }
 
 class SelectablePlate extends React.Component<Props, State> {
-  state: State = {selectedWells: {}, highlightedWells: {}}
+  constructor (props) {
+    super(props)
+    const initialSelectedWells = reduce(this.props.wellContents, (acc, well) => (
+      well.highlighted ? {...acc, [well]: well} : acc
+    ), {})
+    this.state = {selectedWells: initialSelectedWells, highlightedWells: {}}
+  }
 
   _getWellsFromRect = (rect: GenericRect): * => {
     const selectedWells = getCollidingWells(rect, SELECTABLE_WELL_CLASS)
@@ -89,6 +91,7 @@ class SelectablePlate extends React.Component<Props, State> {
       ? omit(this.state.selectedWells, wells)
       : {...this.state.selectedWells, ...wells}
     this.setState({selectedWells: nextSelectedWells, highlightedWells: {}})
+    this.props.updateSelectedWells(nextSelectedWells)
   }
 
   render () {

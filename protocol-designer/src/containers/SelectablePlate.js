@@ -22,6 +22,7 @@ import {
   highlightWells,
   selectWells,
   deselectWells,
+  updateSelectedWells
 } from '../well-selection/actions'
 import wellSelectionSelectors from '../well-selection/selectors'
 
@@ -41,7 +42,7 @@ type OP = {
 }
 
 type DP = {
-  dispatch: Dispatch<*>,
+  updateSelectedWells: (Wells) => mixed,
 }
 
 type MP = {
@@ -150,72 +151,11 @@ function mapStateToProps (state: BaseState, ownProps: OP): SP {
   }
 }
 
-function mergeProps (stateProps: SP, dispatchProps: DP, ownProps: OP): Props {
-  const {dispatch} = dispatchProps
-  const {pipetteChannels} = ownProps
+const mapDispatchToProps = (dispatch: Dispatch<*>): DP => ({
+  updateSelectedWells: (wells) => {
+    console.log('tried to update!')
+    dispatch(updateSelectedWells(wells))
+  },
+})
 
-  const _wellsFromSelected = (selectedWells: Wells): Wells => {
-    // Returns PRIMARY WELLS from the selection.
-    if (pipetteChannels === 8) {
-      // for the wells that have been highlighted,
-      // get all 8-well well sets and merge them
-      const primaryWells: Wells = Object.keys(selectedWells).reduce((acc: Wells, well: string): Wells => {
-        const wellSet = getWellSetForMultichannel(stateProps.containerType, well)
-        if (!wellSet) {
-          return acc
-        }
-
-        const primaryWell = wellSet[0]
-
-        return {
-          ...acc,
-          [primaryWell]: primaryWell,
-        }
-      },
-      {})
-
-      return primaryWells
-    }
-
-    // single-channel or ingred selection mode
-    return selectedWells
-  }
-
-  const _getWellsFromRect = (rect: GenericRect): * => {
-    const selectedWells = getCollidingWells(rect, SELECTABLE_WELL_CLASS)
-    return _wellsFromSelected(selectedWells)
-  }
-
-  return {
-    ...stateProps,
-    ...ownProps,
-
-    onSelectionMove: (e, rect) => {
-      const wells = _getWellsFromRect(rect)
-      if (!e.shiftKey) {
-        dispatch(highlightWells(wells))
-      }
-    },
-
-    onSelectionDone: (e, rect) => {
-      const wells = _getWellsFromRect(rect)
-      if (e.shiftKey) {
-        dispatch(deselectWells(wells))
-      } else {
-        dispatch(selectWells(wells))
-      }
-    },
-
-    // makeOnMouseOverWell: (well: string) => (e: SyntheticMouseEvent<*>) => {
-    //   if (!e.shiftKey) {
-    //     const hoveredWell = {[well]: well}
-    //     dispatch(highlightWells(_wellsFromSelected(hoveredWell)))
-    //   }
-    // },
-    // onMouseExitWell: () => dispatch(
-    //   highlightWells(_wellsFromSelected({})) // TODO more convenient way to de-highlight
-    // ),
-  }
-}
-
-export default connect(mapStateToProps, null, mergeProps)(SelectablePlate)
+export default connect(mapStateToProps, mapDispatchToProps)(SelectablePlate)

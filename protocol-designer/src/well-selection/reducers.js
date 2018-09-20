@@ -37,6 +37,10 @@ const selectedWells = handleActions({
     highlighted: {},
     selected: deleteWells(state.selected, action.payload),
   }),
+  UPDATE_SELECTED_WELLS: (state, action: WellSelectionAction): SelectedWellsState => ({
+    ...state,
+    selected: action.payload,
+  }),
   // Actions that cause "deselect everything" behavior:
   EDIT_MODE_INGREDIENT_GROUP: () => selectedWellsInitialState,
   CLOSE_INGREDIENT_SELECTOR: () => selectedWellsInitialState,
