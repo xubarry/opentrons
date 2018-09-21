@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react'
 
-import SingleLabware from './SingleLabware'
+import SingleLabware from './labware/SingleLabware'
 import styles from './IngredientSelectionModal.css'
 
 import SelectablePlate from '../containers/SelectablePlate'

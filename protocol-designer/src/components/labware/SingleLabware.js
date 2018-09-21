@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react'
 import cx from 'classnames'
-import {SLOT_WIDTH_MM, SLOT_HEIGHT_MM} from '../constants.js'
+import {SLOT_WIDTH_MM, SLOT_HEIGHT_MM} from '../../constants.js'
 import styles from './SingleLabware.css'
 
 type Props = {

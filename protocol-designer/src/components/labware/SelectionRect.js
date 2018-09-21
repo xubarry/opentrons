@@ -1,6 +1,5 @@
 // @flow
 import * as React from 'react'
-import throttle from 'lodash/throttle'
 import styles from './SelectionRect.css'
 import type {DragRect, GenericRect} from '../collision-types'
 
@@ -24,7 +23,6 @@ class SelectionRect extends React.Component<Props, State> {
   constructor (props: Props) {
     super(props)
     this.state = { positions: null, isSelecting: false }
-    // this.throttledHandleDrag = throttle(this.handleDrag, 100)
 
     document.addEventListener('mousemove', this.handleMouseMove)
     document.addEventListener('mouseup', this.handleMouseUp)

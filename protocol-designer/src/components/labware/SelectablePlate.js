@@ -11,9 +11,9 @@ import {
   type Channels,
 } from '@opentrons/components'
 
-import {getCollidingWells} from '../utils'
-import {SELECTABLE_WELL_CLASS} from '../constants'
-import {getWellSetForMultichannel} from '../well-selection/utils'
+import {getCollidingWells} from '../../utils'
+import {SELECTABLE_WELL_CLASS} from '../../constants'
+import {getWellSetForMultichannel} from '../../well-selection/utils'
 import SelectionRect from '../components/SelectionRect.js'
 import type {ContentsByWell, Wells} from '../labware-ingred/types'
 
@@ -88,7 +88,7 @@ class SelectablePlate extends React.Component<Props, State> {
   handleSelectionDone = (e, rect) => {
     const wells = this._getWellsFromRect(rect)
     const nextSelectedWells = e.shiftKey
-      ? omit(this.state.selectedWells, wells)
+      ? omit(this.state.selectedWells, Object.keys(wells))
       : {...this.state.selectedWells, ...wells}
     this.setState({selectedWells: nextSelectedWells, highlightedWells: {}})
     this.props.updateSelectedWells(nextSelectedWells)
