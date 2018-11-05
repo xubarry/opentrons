@@ -905,3 +905,45 @@ def test_unstick_axes(model):
     # from pprint import pprint
     # pprint(current_log)
     assert current_log == expected
+
+
+def test_horizontal_arc(model):
+    import types
+    driver = model.robot._driver
+
+    current_log = []
+
+    def send_command_mock(self, command, timeout=None):
+        nonlocal current_log
+        current_log.append(command)
+
+    driver._send_command = types.MethodType(send_command_mock, driver)
+    
+    target = driver.position
+    arc_center = driver.position
+    arc_center['X'] -= 5
+    driver.horizontal_arc(target, arc_center)
+    assert driver.position == target
+    
+    target = driver.position
+    arc_center = driver.position
+    arc_center['X'] += 5
+    arc_center['Y'] -= 5
+    driver.horizontal_arc(target, arc_center, clockwise=False)
+    assert driver.position == target
+    
+    target = driver.position
+    target['X'] += 20
+    arc_center = driver.position
+    arc_center['X'] += 10
+    driver.horizontal_arc(target, arc_center)
+    assert driver.position == target
+    
+    expected = [
+        'M907 A0.1 B0.05 C0.05 X1.25 Y1.25 Z0.1 G4P0.005 G2 X0 Y0 I-5 J0',
+        'M907 A0.1 B0.05 C0.05 X1.25 Y1.25 Z0.1 G4P0.005 G3 X0 Y0 I5 J-5',
+        'M907 A0.1 B0.05 C0.05 X1.25 Y1.25 Z0.1 G4P0.005 G2 X20 Y0 I10 J0'
+    ]
+    # from pprint import pprint
+    # pprint(current_log)
+    assert current_log == expected
