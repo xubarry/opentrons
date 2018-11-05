@@ -84,7 +84,9 @@ GCODES = {'HOME': 'G28.2',
           'SET_MAX_SPEED': 'M203.1',
           'SET_CURRENT': 'M907',
           'DISENGAGE_MOTOR': 'M18',
-          'HOMING_STATUS': 'G28.6'}
+          'HOMING_STATUS': 'G28.6',
+          'ARC_CLOCKWISE': 'G2',
+          'ARC_COUNTER_CLOCKWISE': 'G3'}
 
 # Number of digits after the decimal point for coordinates being sent
 # to Smoothie
@@ -1274,6 +1276,49 @@ class SmoothieDriver_3_0_0:
         finally:
             self.pop_active_current()
             self.pop_axis_max_speed()
+
+    def horizontal_arc(self, target, center, clockwise=True):
+        '''
+        Move to a given X and Y target coordinate, moving in a circular motion
+        while rotating around a center point. This command can only move the X
+        and Y axes
+         target:
+            Absolute coordinate of the target, ie the final destination of
+            this movement
+         center:
+            Absolute coordinate of the center-point to rotate around
+         clockwise:
+            Move in a clockwise pattern (True) or counter-clockwise pattern
+            (False). Defaults to True.
+        '''
+        arc_target = {}
+        arc_center = {}
+        for ax in 'XY':
+            # default to using the current position
+            arc_target[ax] = round(
+                target.get(ax, self.position[ax]),
+                GCODE_ROUNDING_PRECISION)
+            arc_center[ax] = round(
+                center.get(ax, self.position[ax]),
+                GCODE_ROUNDING_PRECISION)
+            # convert center absolute-coords to relative from current position
+            arc_center[ax] -= self.position[ax]
+        if clockwise:
+            code = GCODES['ARC_CLOCKWISE']
+        else:
+            code = GCODES['ARC_COUNTER_CLOCKWISE']
+        self.dwell_axes('ZABC')
+        self.activate_axes('XY')
+        cmd = self._generate_current_command()
+        cmd += ' {0} X{1} Y{2} I{3} J{4}'.format(
+            code,
+            arc_target['X'],
+            arc_target['Y'],
+            arc_center['X'],
+            arc_center['Y']
+        )
+        self._send_command(cmd, timeout=DEFAULT_MOVEMENT_TIMEOUT)
+        self._update_position(target)
 
     def pause(self):
         if not self.simulating:
