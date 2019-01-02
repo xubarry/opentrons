@@ -255,7 +255,7 @@ class API(HardwareAPILike):
         configs = ['name', 'min_volume', 'max_volume', 'channels',
                    'aspirate_flow_rate', 'dispense_flow_rate',
                    'pipette_id', 'current_volume', 'display_name',
-                   'tip_length']
+                   'tip_length', 'current_tip_length']
         instruments = {top_types.Mount.LEFT: {},
                        top_types.Mount.RIGHT: {}}
         for mount in top_types.Mount:

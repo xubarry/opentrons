@@ -449,9 +449,9 @@ class InstrumentContext:
         for tip_rack in self.tip_racks:
             assert tip_rack.is_tiprack
         if trash is None:
-            self.trash_container = self._ctx.fixed_trash
+            self._trash = self._ctx.fixed_trash
         else:
-            self.trash_container = trash
+            self._trash = trash
 
         self._last_location: Union[Labware, Well, None] = None
         self._last_tip_picked_up_from: Union[Well, None] = None
@@ -638,9 +638,10 @@ class InstrumentContext:
         if not isinstance(loc, Well):
             raise TypeError('Last tip location should be a Well but it is: '
                             '{}'.format(loc))
-        bot = loc.bottom()
-        bot = bot._replace(point=bot.point._replace(z=bot.point.z + 10))
-        self.drop_tip(bot)
+        top = loc.top()
+        offs = self.hw_pipette['current_tip_length'] / 2.0
+        top = top._replace(point=top.point._replace(z=top.point.z - offs))
+        self.drop_tip(top)
         return self
 
     @cmds.publish.both(command=cmds.pick_up_tip)  # noqa(C901)
@@ -773,6 +774,7 @@ class InstrumentContext:
 
         :returns: This instance
         """
+        offs = self.hw_pipette['current_tip_length'] / 2.0
         if location and isinstance(location, types.Location):
             if isinstance(location.labware, Well):
                 target = location
@@ -786,13 +788,17 @@ class InstrumentContext:
                     "reference to {}".format(location.labware))
         elif location and isinstance(location, Well):
             if 'fixedTrash' in quirks_from_any_parent(location):
-                target = location.top()
+                top = location.top()
+                target = top._replace(
+                    point=top.point._replace(z=top.point.z - offs))
             else:
                 bot = location.bottom()
                 target = bot._replace(
-                    point=bot.point._replace(z=bot.point.z + 10))
+                    point=bot.point._replace(z=bot.point.z + offs))
         elif not location:
-            target = self.trash_container.wells()[0].top()
+            top = self.trash_container.wells()[0].top()
+            target = top._replace(
+                point=top.point._replace(z=top.point.z - offs))
         else:
             raise TypeError(
                 "If specified, location should be an instance of "

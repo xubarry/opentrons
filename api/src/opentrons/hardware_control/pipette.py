@@ -176,5 +176,6 @@ class Pipette:
         config_dict.update({'current_volume': self.current_volume,
                             'name': self.name,
                             'pipette_id': self.pipette_id,
-                            'has_tip': self.has_tip})
+                            'has_tip': self.has_tip,
+                            'current_tip_length': self.current_tip_length})
         return config_dict
