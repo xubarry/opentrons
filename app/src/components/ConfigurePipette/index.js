@@ -30,7 +30,7 @@ type Props = SP & OP
 export default connect(makeMapStateToProps)(ConfigurePipette)
 
 function ConfigurePipette (props: Props) {
-  const {parentUrl, mount, pipettes} = props
+  const {parentUrl, mount, pipettes, robot} = props
   // TODO (ka 2019-2-12): This logic is used to get display name in slightly
   // different ways in several different files.
   const pipette = pipettes && pipettes[mount]
@@ -47,7 +47,7 @@ function ConfigurePipette (props: Props) {
       buttons={[{children: 'cancel', Component: Link, to: parentUrl}]}
     >
       <ConfigMessage />
-      {pipette && <ConfigForm pipette={pipette} />}
+      {pipette && <ConfigForm pipette={pipette} robot={robot} />}
     </ScrollableAlertModal>
   )
 }
