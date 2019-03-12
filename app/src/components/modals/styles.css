@@ -53,5 +53,6 @@
 .scrollable_modal_scroll {
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-bottom: 3rem;
 }
