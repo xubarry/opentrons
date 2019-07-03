@@ -19,7 +19,7 @@ from opentrons.protocol_api import (ProtocolContext,
                                     labware,
                                     run_protocol)
 from opentrons.hardware_control import adapters, API
-from opentrons.types import Location, Point
+from opentrons.types import Location
 
 from .models import Container, Instrument, Module
 
@@ -472,12 +472,12 @@ def now():
 
 
 def _get_parent_module(placeable):
-    if not placeable or isinstance(placeable, (Point, str)):
-        res = None
-    elif isinstance(placeable,
-                    (ModulePlaceable, labware.ModuleGeometry)):
+    res = None
+    if isinstance(placeable, (ModulePlaceable, labware.ModuleGeometry)):
         res = placeable
-    else:
+    elif isinstance(placeable, Placeable):
+        res = _get_parent_module(placeable.parent)
+    elif isinstance(placeable, (labware.Well, labware.Labware)):
         res = _get_parent_module(placeable.parent)
     return res
 
@@ -501,7 +501,6 @@ def _get_labware(command):
 
     location = command.get('location')
     instrument = command.get('instrument')
-
     placeable = location
     if isinstance(location, Location):
         placeable = location.labware
