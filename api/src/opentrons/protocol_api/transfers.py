@@ -39,6 +39,12 @@ class TransferMode(enum.Enum):
     TRANSFER = enum.auto()
 
 
+class MultiWellStrategy(enum.Enum):
+    DEFAULT = enum.auto()
+    MULTIASPIRATE = enum.auto()
+    MULTIDISPENSE = enum.auto()
+
+
 class Transfer(NamedTuple):
     """
     Options pertaining to behavior of the transfer.
@@ -54,6 +60,7 @@ class Transfer(NamedTuple):
     drop_tip_strategy: DropTipStrategy = DropTipStrategy.TRASH
     blow_out_strategy: BlowOutStrategy = BlowOutStrategy.NONE
     touch_tip_strategy: TouchTipStrategy = TouchTipStrategy.NEVER
+    multi_well_strategy: MultiWellStrategy = MultiWellStrategy.DEFAULT
 
 
 Transfer.new_tip.__doc__ = """
@@ -178,6 +185,25 @@ Transfer.touch_tip_strategy.__doc__ = """
 
     To customize the behavior of touch tips, see
     :py:attr:`.TransferOptions.touch_tip`.
+    """
+
+Transfer.multi_well_strategy.__doc__ = """
+    Determines whether to enable multi-aspirate for consolidation or
+    multi-dispense for distribution
+
+    :py:attr:`MultiWellStrategy.MULTIASPIRATE`
+        Activate multi-aspirate during the conslidate step, i.e. aspirate
+        from multiple wells before dispensing content in the tip in one
+        well
+
+    :py:attr:`MultiWellStrategy.MULTIDISPENSE`
+        Activate multi-dispense during the distribution step, i.e. dispense
+        content in the tip to multiple wells
+
+    :py:attr:`MultiWellStrategy.DEFAULT`
+        Disable multi-aspirate or multi-dispense for consolidate and
+        distribute, using the same tip to aspirate from one well and
+        dispense into another
     """
 
 
@@ -549,6 +575,10 @@ class TransferPlan:
             - self._strategy.disposal_volume
             - self._strategy.air_gap)
 
+        if self._strategy.multi_well_strategy == \
+                MultiWellStrategy.MULTIDISPENSE:
+            print('Multi-dispensing!')
+
         done = False
         current_xfer = next(plan_iter)
         if self._strategy.new_tip == types.TransferTipPolicy.ALWAYS:
@@ -632,6 +662,11 @@ class TransferPlan:
         current_xfer = next(plan_iter)
         if self._strategy.new_tip == types.TransferTipPolicy.ALWAYS:
             yield self._format_dict('pick_up_tip', kwargs=self._tip_opts)
+
+        if self._strategy.multi_well_strategy == \
+                MultiWellStrategy.MULTIASPIRATE:
+            print('Multi-ASPIRATING!')
+
         done = False
         while not done:
             asp_grouped = []

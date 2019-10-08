@@ -1460,6 +1460,7 @@ class InstrumentContext(CommandPublisher):
                    volume: float,
                    source: Well,
                    dest: List[Well],
+                   multidispense: bool = False,
                    *args, **kwargs) -> 'InstrumentContext':
         """
         Move a volume of liquid from one source to multiple destinations.
@@ -1468,6 +1469,7 @@ class InstrumentContext(CommandPublisher):
                        well.
         :param source: A single well from where liquid will be aspirated.
         :param dest: List of Wells where liquid will be dispensed to.
+        :param multidispense:
         :param kwargs: See :py:meth:`transfer`. Some arguments are changed.
                        Specifically,
                        - ``mix_after``, if specified, is ignored.
@@ -1481,6 +1483,8 @@ class InstrumentContext(CommandPublisher):
         kwargs['disposal_volume'] = kwargs.get(
             'disposal_volume', self.min_volume)
         kwargs['mix_after'] = (0, 0)
+        kwargs['multiaspirate'] = False
+        kwargs['multidispense'] = multidispense
         return self.transfer(volume, source, dest, **kwargs)
 
     @cmds.publish.both(command=cmds.consolidate)
@@ -1488,6 +1492,7 @@ class InstrumentContext(CommandPublisher):
                     volume: float,
                     source: List[Well],
                     dest: Well,
+                    multiaspirate: bool = False,
                     *args, **kwargs) -> 'InstrumentContext':
         """
         Move liquid from multiple wells (sources) to a single well(destination)
@@ -1496,6 +1501,7 @@ class InstrumentContext(CommandPublisher):
                        well.
         :param source: List of wells from where liquid will be aspirated.
         :param dest: The single well into which liquid will be dispensed.
+        :param multiaspirate:
         :param kwargs: See :py:meth:`transfer`. Some arguments are changed.
                        Specifically,
                        - ``mix_before``, if specified, is ignored.
@@ -1507,6 +1513,8 @@ class InstrumentContext(CommandPublisher):
         kwargs['mode'] = 'consolidate'
         kwargs['mix_before'] = (0, 0)
         kwargs['disposal_volume'] = 0
+        kwargs['multidispense'] = False
+        kwargs['multiaspirate'] = multiaspirate
         return self.transfer(volume, source, dest, **kwargs)
 
     @cmds.publish.both(command=cmds.transfer)
@@ -1633,6 +1641,12 @@ class InstrumentContext(CommandPublisher):
         if disposal is None:
             disposal = default_args.disposal_volume
 
+        multiwell = None
+        if kwargs.get('multiaspirate'):
+            multiwell = transfers.MultiWellStrategy.MULTIASPIRATE
+        if kwargs.get('multidispense'):
+            multiwell = transfers.MultiWellStrategy.MULTIDISPENSE
+
         transfer_args = transfers.Transfer(
             new_tip=new_tip or default_args.new_tip,
             air_gap=kwargs.get('air_gap') or default_args.air_gap,
@@ -1644,10 +1658,13 @@ class InstrumentContext(CommandPublisher):
             drop_tip_strategy=drop_tip,
             blow_out_strategy=blow_out or default_args.blow_out_strategy,
             touch_tip_strategy=(touch_tip or
-                                default_args.touch_tip_strategy)
+                                default_args.touch_tip_strategy),
+            multi_well_strategy=multiwell or default_args.multi_well_strategy
         )
+        print(f"Transfer Args: {transfer_args}")
         transfer_options = transfers.TransferOptions(transfer=transfer_args,
                                                      mix=mix_opts)
+        print(f"Transfer Options: {transfer_options}")
         plan = transfers.TransferPlan(volume, source, dest, self, max_volume,
                                       kwargs['mode'], transfer_options)
         self._execute_transfer(plan)
