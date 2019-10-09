@@ -83,19 +83,25 @@ def plan_moves(
         return [(to_point, dest_cp_override)]
 
     # Generate arc moves
-
+    MODULE_LOG.info(f"From point in geometry {from_point}")
+    MODULE_LOG.info(f"To point in geometry {to_point}")
+    MODULE_LOG.info(f"Well z margin {well_z_margin}")
     # Find the safe z heights based on the destination and origin labware/well
     if to_lw and to_lw == from_lw:
         # If we know the labwares we’re moving from and to, we can calculate
         # a safe z based on their heights
         if to_well:
             to_safety = to_well.top().point.z + well_z_margin
+            MODULE_LOG.info(f"In to well, safety is {to_safety}")
         else:
             to_safety = to_lw.highest_z + well_z_margin
+            MODULE_LOG.info(f"Not to well, safety is {to_safety}")
         if from_well:
             from_safety = from_well.top().point.z + well_z_margin
+            MODULE_LOG.info(f"From well, safety is {from_safety}")
         else:
             from_safety = from_lw.highest_z + well_z_margin
+            MODULE_LOG.info(f"Not from well, safety is {from_safety}")
     else:
         # One of our labwares is invalid so we have to just go above
         # deck.highest_z since we don’t know where we are
@@ -108,7 +114,7 @@ def plan_moves(
         to_safety,
         from_safety,
         minimum_z_height or 0)
-
+    MODULE_LOG.info(f"Safe height {safe}")
     # We should use the origin’s cp for the first move since it should
     # move only in z and the destination’s cp subsequently
     return [(from_point._replace(z=safe), origin_cp_override),
