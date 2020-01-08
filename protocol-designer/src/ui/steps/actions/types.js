@@ -1,5 +1,5 @@
 // @flow
-import type { StepIdType } from '../../../form-types'
+import type { StepIdType, StepType } from '../../../form-types'
 import type { TerminalItemId, SubstepIdentifier } from '../../../steplist/types'
 
 export type ClearWellSelectionLabwareKeyAction = {
@@ -55,4 +55,8 @@ export type SetWellSelectionLabwareKeyAction = {
   payload: ?string,
 }
 
-export type SelectStepAction = { type: 'SELECT_STEP', payload: StepIdType }
+export type SelectStepAction = {
+  type: 'SELECT_STEP',
+  payload: StepIdType,
+  meta: { newStepType: StepType | null },
+}

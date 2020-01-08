@@ -85,6 +85,7 @@ export const selectStep = (
   const selectStepAction: SelectStepAction = {
     type: 'SELECT_STEP',
     payload: stepId,
+    meta: { newStepType: newStepType || null },
   }
 
   dispatch(selectStepAction)

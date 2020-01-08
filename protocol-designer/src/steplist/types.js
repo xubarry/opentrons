@@ -14,6 +14,7 @@ export const END_TERMINAL_ITEM_ID: '__end__' = '__end__'
 export type TerminalItemId =
   | typeof START_TERMINAL_ITEM_ID
   | typeof END_TERMINAL_ITEM_ID
+export const NEW_UNSAVED_STEP_ID: 'NEW_UNSAVED_STEP_ID' = 'NEW_UNSAVED_STEP_ID'
 
 export type WellIngredientNames = { [ingredId: string]: string }
 

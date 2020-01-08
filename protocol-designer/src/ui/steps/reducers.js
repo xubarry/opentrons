@@ -5,6 +5,7 @@ import omit from 'lodash/omit'
 import { getPDMetadata } from '../../file-types'
 import {
   START_TERMINAL_ITEM_ID,
+  NEW_UNSAVED_STEP_ID,
   type SubstepIdentifier,
   type TerminalItemId,
 } from '../../steplist/types'
@@ -18,8 +19,9 @@ import {
 import type { ActionType, Reducer } from 'redux-actions'
 import type { Action } from '../../types'
 import type { LoadFileAction } from '../../load-file'
-import type { StepIdType } from '../../form-types'
+import type { StepIdType, StepType } from '../../form-types'
 import type { AddStepAction, DeleteStepAction } from '../../steplist/actions'
+import type { SaveStepFormAction } from '../../step-forms/actions'
 import type {
   SelectStepAction,
   SelectTerminalItemAction,
@@ -127,11 +129,29 @@ const wellSelectionLabwareKey = handleActions<string | null, *>(
   null
 )
 
+type NewUnsavedStepFormState = StepType | null
+export const newUnsavedStepForm = handleActions<NewUnsavedStepFormState, *>(
+  {
+    ADD_STEP: (state, action: AddStepAction): NewUnsavedStepFormState =>
+      action.payload.stepType,
+    SELECT_STEP: (state, action: SelectStepAction): NewUnsavedStepFormState =>
+      action.payload === NEW_UNSAVED_STEP_ID ? action.meta.newStepType : null,
+    DELETE_STEP: (state, action: DeleteStepAction): NewUnsavedStepFormState =>
+      action.payload === NEW_UNSAVED_STEP_ID ? null : state,
+    SAVE_STEP_FORM: (
+      state,
+      action: SaveStepFormAction
+    ): NewUnsavedStepFormState => null,
+  },
+  null
+)
+
 export type StepsState = {|
   collapsedSteps: CollapsedStepsState,
   selectedItem: SelectedItemState,
   hoveredItem: HoveredItemState,
   hoveredSubstep: SubstepIdentifier,
+  newUnsavedStepForm: NewUnsavedStepFormState,
   wellSelectionLabwareKey: ?string,
 |}
 
@@ -140,6 +160,7 @@ export const _allReducers = {
   selectedItem,
   hoveredItem,
   hoveredSubstep,
+  newUnsavedStepForm,
   wellSelectionLabwareKey,
 }
 
