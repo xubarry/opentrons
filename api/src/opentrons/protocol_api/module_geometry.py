@@ -8,18 +8,20 @@ by :py:mod:`.module_contexts`)
 """
 
 import json
-from typing import Any, Dict, Optional, Union
+import logging
+import re
+from typing import Any, Dict, Optional
+
+import jsonschema  # type: ignore
 
 from opentrons.system.shared_data import load_shared_data
 from opentrons.types import Location, Point
 from opentrons.protocols.types import APIVersion
-from .definitions import MAX_SUPPORTED_VERSION, DeckItem
+from .definitions import MAX_SUPPORTED_VERSION, DeckItem, V2_MODULE_DEF_VERSION
 from .labware import Labware
 
 
-ModuleDefinitionV1 = Dict[str, Any]
-ModuleDefinitionV2 = Dict[str, Any]
-ModuleDefinition = Union[ModuleDefinitionV1, ModuleDefinitionV2]
+log = logging.getLogger(__name__)
 
 
 class NoSuchModuleError(Exception):
@@ -41,19 +43,24 @@ class ModuleGeometry(DeckItem):
     """
 
     @classmethod
-    def resolve_module_name(cls, module_name: str):
+    def resolve_module_model(cls, module_name: str) -> str:
+        """ Turn any of the supported load names into module model names """
         alias_map = {
-            'magdeck': 'magdeck',
-            'magnetic module': 'magdeck',
-            'tempdeck': 'tempdeck',
-            'temperature module': 'tempdeck',
-            'thermocycler': 'thermocycler',
-            'thermocycler module': 'thermocycler'
+            'magdeck': 'magneticModuleV1',
+            'magnetic module': 'magneticModuleV1',
+            'magnetic module gen2': 'magneticModuleV2',
+            'tempdeck': 'temperatureModuleV1',
+            'temperature module': 'temperatureModuleV1',
+            'temperature module gen2': 'temperatureModuleV2',
+            'thermocycler': 'thermocyclerV1',
+            'thermocycler module': 'thermocyclerV1'
         }
         lower_name = module_name.lower()
         resolved_name = alias_map.get(lower_name, None)
         if not resolved_name:
-            raise ValueError(f'{module_name} is not a valid module load name')
+            raise ValueError(f'{module_name} is not a valid module load name.\n'
+                             'Valid names (ignoring case): '
+                             '"' + '", "'.join(alias_map.keys()) + '"')
         return resolved_name
 
     @property
@@ -62,9 +69,13 @@ class ModuleGeometry(DeckItem):
         return True
 
     def __init__(self,
-                 definition: dict,
+                 display_name: str,
+                 model: str,
+                 offset: Point,
+                 overall_height: float,
+                 height_over_labware: float,
                  parent: Location,
-                 api_level: APIVersion = None) -> None:
+                 api_level: APIVersion) -> None:
         """
         Create a Module for tracking the position of a module.
 
@@ -76,9 +87,15 @@ class ModuleGeometry(DeckItem):
         this would be to correct the :py:class:`.Location` so that the
         calibrated labware is targeted accurately in both positions.
 
-        :param definition: A dict containing all the data required to define
-                           the geometry of the module.
-        :type definition: dict
+        :param display_name: A human-readable display name of only the module
+                             (for instance, "Thermocycler Module" - not
+                             including parents or location)
+        :param model: The model of module this represents
+        :param offset: The offset from the slot origin at which labware loaded
+                       on this module should be placed
+        :param overall_height: The height of the module without labware
+        :param height_over_labware: The height of this module over the top of
+                                    the labware
         :param parent: A location representing location of the front left of
                        the outside of the module (usually the front-left corner
                        of a slot on the deck).
@@ -86,28 +103,16 @@ class ModuleGeometry(DeckItem):
         :param APIVersion api_level: the API version to set for the loaded
                                      :py:class:`ModuleGeometry` instance. The
                                      :py:class:`ModuleGeometry` will
-                                     conform to this level. If not specified,
-                                     defaults to
-                                     :py:attr:`.MAX_SUPPORTED_VERSION`.
+                                     conform to this level.
         """
-        if not api_level:
-            api_level = MAX_SUPPORTED_VERSION
-        if api_level > MAX_SUPPORTED_VERSION:
-            raise RuntimeError(
-                f'API version {api_level} is not supported by this '
-                f'robot software. Please either reduce your requested API '
-                f'version or update your robot.')
         self._api_version = api_level
         self._parent = parent
-        self._display_name = "{} on {}".format(definition["displayName"],
-                                               str(parent.labware))
-        self._load_name = definition["loadName"]
-        self._offset = Point(definition["labwareOffset"]["x"],
-                             definition["labwareOffset"]["y"],
-                             definition["labwareOffset"]["z"])
-        self._height = definition["dimensions"]["bareOverallHeight"]\
-            + self._parent.point.z
-        self._over_labware = definition["dimensions"]["overLabwareHeight"]
+        self._display_name = "{} on {}".format(
+            display_name, str(parent.labware))
+        self._load_name = model
+        self._offset = offset
+        self._height = overall_height + self._parent.point.z
+        self._over_labware = height_over_labware
         self._labware: Optional[Labware] = None
         self._location = Location(
             point=self._offset + self._parent.point,
@@ -166,10 +171,48 @@ class ModuleGeometry(DeckItem):
 
 
 class ThermocyclerGeometry(ModuleGeometry):
-    def __init__(self, definition: Dict[str, Any], parent: Location,
-                 api_level: APIVersion = None) -> None:
-        super().__init__(definition, parent, api_level)
-        self._lid_height = definition["dimensions"]["lidHeight"]
+    def __init__(self,
+                 display_name: str,
+                 model: str,
+                 offset: Point,
+                 overall_height: float,
+                 height_over_labware: float,
+                 lid_height: float,
+                 parent: Location,
+                 api_level: APIVersion) -> None:
+        """
+        Create a Module for tracking the position of a module.
+
+        Note that modules do not currently have a concept of calibration apart
+        from calibration of labware on top of the module. The practical result
+        of this is that if the module parent :py:class:`.Location` is
+        incorrect, then acorrect calibration of one labware on the deck would
+        be incorrect on the module, and vice-versa. Currently, the way around
+        this would be to correct the :py:class:`.Location` so that the
+        calibrated labware is targeted accurately in both positions.
+
+        :param display_name: A human-readable display name of only the module
+                             (for instance, "Thermocycler Module" - not
+                             including parents or location)
+        :param model: The model of module this represents
+        :param offset: The offset from the slot origin at which labware loaded
+                       on this module should be placed
+        :param overall_height: The height of the module without labware
+        :param height_over_labware: The height of this module over the top of
+                                    the labware
+        :param parent: A location representing location of the front left of
+                       the outside of the module (usually the front-left corner
+                       of a slot on the deck).
+        :type parent: :py:class:`.Location`
+        :param APIVersion api_level: the API version to set for the loaded
+                                     :py:class:`ModuleGeometry` instance. The
+                                     :py:class:`ModuleGeometry` will
+                                     conform to this level.
+        """
+        super().__init__(
+            display_name, model, offset, overall_height,
+            height_over_labware, parent, api_level)
+        self._lid_height = lid_height
         self._lid_status = 'open'   # Needs to reflect true status
         # TODO: BC 2019-07-25 add affordance for "semi" configuration offset
         # to be from a flag in context, according to drawings, the only
@@ -213,6 +256,57 @@ class ThermocyclerGeometry(ModuleGeometry):
         return self._labware
 
 
+def _load_from_v1(definition: Dict[str, Any],
+                  parent: Location,
+                  api_level: APIVersion) -> ModuleGeometry:
+    """ Load a module geometry from a v1 definition.
+
+    The definition should be schema checked before being passed to this
+    function; all definitions passed here are assumed to be valid.
+    """
+    mod_name = definition['loadName']
+    model_name = {'thermocycler': 'thermocyclerModuleV1',
+                  'magdeck': 'magneticModuleV1',
+                  'tempdeck': 'temperatureModuleV1'}[mod_name]
+    offset = Point(definition["labwareOffset"]["x"],
+                   definition["labwareOffset"]["y"],
+                   definition["labwareOffset"]["z"])
+    overall_height = definition["dimensions"]["bareOverallHeight"]\
+
+    height_over_labware = definition["dimensions"]["overLabwareHeight"]
+
+    if mod_name == 'thermocycler':
+        lid_height = definition['dimensions']['lidHeight']
+        mod: ModuleGeometry = \
+            ThermocyclerGeometry(definition["displayName"],
+                                 model_name,
+                                 offset,
+                                 overall_height,
+                                 height_over_labware,
+                                 lid_height,
+                                 parent,
+                                 api_level)
+    else:
+        mod = ModuleGeometry(definition['displayName'],
+                             model_name,
+                             offset,
+                             overall_height,
+                             height_over_labware,
+                             parent, api_level)
+    return mod
+
+
+def _load_from_v2(definition: Dict[str, Any],
+                  parent: Location,
+                  api_level: APIVersion) -> ModuleGeometry:
+    """ Load a module geometry from a v2 definition.
+
+    The definition should be schema checked before being passed to this
+     function; all definitions passed here are assumed to be valid.
+    """
+    pass
+
+
 def load_module_from_definition(
         definition: Dict[str, Any],
         parent: Location,
@@ -233,23 +327,54 @@ def load_module_from_definition(
                                  defaults to :py:attr:`.MAX_SUPPORTED_VERSION`.
     """
     api_level = api_level or MAX_SUPPORTED_VERSION
-    mod_name = definition['loadName']
+    schema = definition.get("$otSharedSchema")
+    if not schema:
+        # v1 definitions don't have schema versions
+        return _load_from_v1(definition, parent, api_level)
+    if schema == 'module/schemas/2':
+        schema_doc = json.loads(load_shared_data("module/schemas/2.json"))
+        try:
+            jsonschema.validate(definition, schema_doc)
+        except jsonschema.ValidationError:
+            log.exception("Failed to validate module def schema")
+            raise RuntimeError('The specified module definition is not valid.')
+        return _load_from_v2(definition, parent, api_level)
+    elif isinstance(schema, str):
+        maybe_schema = re.match('^module/schemas/([0-9]+)$', schema)
+        if maybe_schema:
+            raise RuntimeError(
+                f"Module definitions of schema version {maybe_schema.group(1)}"
+                " are not supported in this robot software release.")
+    log.error(f"Bad module definition (schema specifier {schema})")
+    raise RuntimeError(
+        f'The specified module definition is not valid.')
 
-    if mod_name == 'thermocycler':
-        mod: ModuleGeometry = \
-                ThermocyclerGeometry(definition, parent, api_level)
-    else:
-        mod = ModuleGeometry(definition, parent, api_level)
-    # TODO: calibration
-    return mod
 
-
-def _load_module_definition(api_level: APIVersion) -> Dict[str, Any]:
+def _load_module_definition(api_level: APIVersion,
+                            module_model) -> Dict[str, Any]:
     """
     Load the appropriate module definition for this api version
     """
-    return json.loads(load_shared_data('module/definitions/1.json'))
-
+    if api_level < V2_MODULE_DEF_VERSION:
+        v1names = {'magneticModuleV1': 'magdeck',
+                   'temperatureModuleV1': 'tempdeck',
+                   'thermocyclerModuleV1': 'thermocycler'}
+        try:
+            name = v1names[module_model]
+        except KeyError:
+            raise NoSuchModuleError(
+                f'API version {api_level} does not support the module '
+                f'{module_model} Please use at least version'
+                f'{V2_MODULE_DEF_VERSION} to use this module.', module_model)
+        return json.loads(load_shared_data('module/definitions/1.json')[name])
+    else:
+        try:
+            defn = json.loads(
+                load_shared_data(f'module/definitions/2/{module_model}.json'))
+        except OSError:
+            raise NoSuchModuleError(
+                f'Could not find the module {module_model}.', module_model)
+        return defn
 
 def load_module(
         name: str,
@@ -259,9 +384,8 @@ def load_module(
     Return a :py:class:`ModuleGeometry` object from a definition looked up
     by name.
 
-    :param name: A string to use for looking up the definition. The string
-                 must be present as a top-level key in
-                 module/definitions/{moduleDefinitionVersion}.json.
+    :param name: The module model to use. This should be one of the strings
+                 returned by :py:func:`ModuleGeometry.resolve_module_model`
     :param parent: A :py:class:`.Location` representing the location where
                    the front and left most point of the outside of the module
                    is (often the front-left corner of a slot on the deck).
@@ -272,5 +396,5 @@ def load_module(
                                  defaults to :py:attr:`.MAX_SUPPORTED_VERSION`.
     """
     api_level = api_level or MAX_SUPPORTED_VERSION
-    defn = _load_module_definition(api_level)
+    defn = _load_module_definition(api_level, name)
     return load_module_from_definition(defn[name], parent, api_level)

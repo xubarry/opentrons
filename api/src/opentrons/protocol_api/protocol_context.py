@@ -417,10 +417,10 @@ class ProtocolContext(CommandPublisher):
         :returns ModuleContext: The loaded and initialized
                                 :py:class:`ModuleContext`.
         """
-        resolved_name = ModuleGeometry.resolve_module_name(module_name)
+        resolved_model = ModuleGeometry.resolve_module_model(module_name)
         resolved_location = self._deck_layout.resolve_module_location(
-                resolved_name, location)
-        geometry = load_module(resolved_name,
+                resolved_model, location)
+        geometry = load_module(resolved_model,
                                self._deck_layout.position_for(
                                     resolved_location))
         hc_mod_instance = None
