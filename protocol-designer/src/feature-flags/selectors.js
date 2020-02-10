@@ -9,9 +9,10 @@ export const getEnabledPrereleaseMode: Selector<?boolean> = createSelector(
   flags => flags.PRERELEASE_MODE
 )
 
+// DO NOT MERGE. For user test, always enable modules.
 export const getEnableModules: Selector<?boolean> = createSelector(
   getFeatureFlagData,
-  flags => flags.OT_PD_ENABLE_MODULES
+  flags => true
 )
 
 export const getDisableModuleRestrictions: Selector<?boolean> = createSelector(
