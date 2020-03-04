@@ -318,7 +318,7 @@
     "minVolume": 100,
     "maxVolume": 1000,
     "smoothieConfigs": {
-      "stepsPerMM": 3200,
+      "stepsPerMM": 100,
       "homePosition": 172.15,
       "travelDistance": 60
     }
