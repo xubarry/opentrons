@@ -518,10 +518,14 @@ def resolve_module_model(module_name: str) -> ModuleModel:
     alias_map: Mapping[str, ModuleModel] = {
         'magdeck': MagneticModuleModel.MAGNETIC_V1,
         'magnetic module': MagneticModuleModel.MAGNETIC_V1,
+        'magneticModuleV1': MagneticModuleModel.MAGNETIC_V1,
         'magnetic module gen2': MagneticModuleModel.MAGNETIC_V2,
+        'magneticModuleV2': MagneticModuleModel.MAGNETIC_V2,
         'tempdeck': TemperatureModuleModel.TEMPERATURE_V1,
         'temperature module': TemperatureModuleModel.TEMPERATURE_V1,
+        'temperatureModuleV1': TemperatureModuleModel.TEMPERATURE_V1,
         'temperature module gen2': TemperatureModuleModel.TEMPERATURE_V2,
+        'temperatureModuleV2': TemperatureModuleModel.TEMPERATURE_V2,
         'thermocycler': ThermocyclerModuleModel.THERMOCYCLER_V1,
         'thermocycler module': ThermocyclerModuleModel.THERMOCYCLER_V1,
     }
