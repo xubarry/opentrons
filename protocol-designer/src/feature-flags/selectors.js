@@ -19,5 +19,5 @@ export const getDisableModuleRestrictions: Selector<?boolean> = createSelector(
 
 export const getEnableThermocycler: Selector<?boolean> = createSelector(
   getFeatureFlagData,
-  flags => flags.OT_PD_ENABLE_THERMOCYCLER
+  flags => true // USER TESTING ONLY -- DO NOT MERGE INTO EDGE
 )
