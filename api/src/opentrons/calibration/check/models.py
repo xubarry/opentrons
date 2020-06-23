@@ -1,5 +1,4 @@
 from uuid import UUID
-from enum import Enum
 from typing import Dict, Optional, List, Any, Tuple
 from functools import partial
 from pydantic import BaseModel, Field
@@ -10,23 +9,6 @@ OffsetVector = Tuple[float, float, float]
 OffsetVectorField = partial(Field, ...,
                             description="An offset vector in deck "
                                         "coordinates (x, y, z)")
-
-
-class TiprackPosition(BaseModel):
-    locationId: UUID
-    offset: OffsetVector = OffsetVectorField()
-
-
-class SessionType(str, Enum):
-    """The available session types"""
-    null = 'null'
-    default = 'default'
-    calibration_check = 'calibrationCheck'
-    tip_length_calibration = 'tipLengthCalibration'
-
-
-class SpecificPipette(BaseModel):
-    pipetteId: Optional[UUID] = Field(None)
 
 
 class JogPosition(BaseModel):
@@ -58,6 +40,8 @@ class AttachedPipette(BaseModel):
         Field(None, description="Id of tiprack associated with this pipette.")
     rank: Optional[str] =\
         Field(None, description="Rank in the order of pipettes used for flow")
+    serial: Optional[str] =\
+        Field(None, description="The serial number of the attached pipette")
 
 
 class LabwareStatus(BaseModel):

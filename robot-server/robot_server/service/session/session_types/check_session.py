@@ -64,7 +64,8 @@ class CheckSession(BaseSession):
                 mount=str(v.mount),
                 has_tip=v.has_tip,
                 rank=v.rank,
-                tiprack_id=v.tiprack_id)
+                tiprack_id=v.tiprack_id,
+                serial=v.serial)
             for k, v in self._calibration_check.pipette_status().items()
         }
         labware = [
@@ -95,5 +96,5 @@ class CheckSession(BaseSession):
         return self._command_queue
 
     @property
-    def session_type(self) -> calibration_models.SessionType:
-        return calibration_models.SessionType.calibration_check
+    def session_type(self) -> models.SessionType:
+        return models.SessionType.calibration_check

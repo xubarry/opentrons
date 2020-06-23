@@ -330,7 +330,7 @@ class CheckCalibrationSession(CalibrationSession, StateMachine):
 
     @property
     def _initial_z_offset(self):
-        return Point(0, 0, 0.5)
+        return Point(0, 0, 0.3)
 
     async def _is_checking_both_mounts(self):
         return len(self._pip_info_by_mount) == 2
@@ -377,6 +377,7 @@ class CheckCalibrationSession(CalibrationSession, StateMachine):
                 has_tip=bool(hw_pip['has_tip']),
                 tiprack_id=pip_info.tiprack_id,
                 rank=str(pip_info.rank),
+                serial=str(hw_pip['pipette_id']),
             )
             to_dict[mount] = p
         return to_dict
@@ -561,19 +562,19 @@ class CheckCalibrationSession(CalibrationSession, StateMachine):
         else:
             return PIPETTE_TOLERANCES['other_height']
 
-    def _is_instr_offset_diff(
+    def _get_error_source(
             self,
             comparisons: typing.Dict[CalibrationCheckState, ComparisonStatus],
-            jogged_state: CalibrationCheckState):
-        is_second_pip = jogged_state in [
-            CalibrationCheckState.joggingSecondPipetteToHeight,
-            CalibrationCheckState.joggingSecondPipetteToPointOne,
+            comparison_state: CalibrationCheckState) -> DeckCalibrationError:
+        is_second_pip = comparison_state in [
+            CalibrationCheckState.comparingSecondPipetteHeight,
+            CalibrationCheckState.comparingSecondPipettePointOne,
         ]
         first_pip_keys = [
-            CalibrationCheckState.joggingFirstPipetteToHeight,
-            CalibrationCheckState.joggingFirstPipetteToPointOne,
-            CalibrationCheckState.joggingFirstPipetteToPointTwo,
-            CalibrationCheckState.joggingFirstPipetteToPointThree,
+            CalibrationCheckState.comparingFirstPipetteHeight,
+            CalibrationCheckState.comparingFirstPipettePointOne,
+            CalibrationCheckState.comparingFirstPipettePointTwo,
+            CalibrationCheckState.comparingFirstPipettePointThree,
         ]
         compared_first = all((k in comparisons) for k in first_pip_keys)
         first_pip_steps_passed = compared_first
@@ -582,20 +583,25 @@ class CheckCalibrationSession(CalibrationSession, StateMachine):
             if c and c.exceedsThreshold:
                 first_pip_steps_passed = False
                 break
-        return is_second_pip and first_pip_steps_passed
+        if is_second_pip and first_pip_steps_passed:
+            return DeckCalibrationError.BAD_INSTRUMENT_OFFSET
+        elif self.can_distinguish_instr_offset() and not is_second_pip:
+            return DeckCalibrationError.BAD_DECK_TRANSFORM
+        else:
+            return DeckCalibrationError.UNKNOWN
 
     def get_comparisons_by_step(
             self) -> typing.Dict[CalibrationCheckState, ComparisonStatus]:
         comparisons: typing.Dict[CalibrationCheckState, ComparisonStatus] = {}
-        for jogged_state, comp in COMPARISON_STATE_MAP.items():
+        for comparison_state, comp in COMPARISON_STATE_MAP.items():
             ref_pt = self._saved_points.get(getattr(CalibrationCheckState,
                                                     comp.reference_state),
                                             None)
 
             jogged_pt = self._saved_points.get(getattr(CalibrationCheckState,
-                                                       jogged_state), None)
+                                                       comparison_state), None)
 
-            threshold_vector = self._determine_threshold(jogged_state)
+            threshold_vector = self._determine_threshold(comparison_state)
             if (ref_pt is not None and jogged_pt is not None):
                 diff_magnitude = None
                 if threshold_vector.z == 0.0:
@@ -614,12 +620,11 @@ class CheckCalibrationSession(CalibrationSession, StateMachine):
                 exceeds = diff_magnitude > threshold_mag
                 tform_type = DeckCalibrationError.UNKNOWN
 
-                if exceeds and self._is_instr_offset_diff(comparisons,
-                                                          jogged_state):
-                    tform_type = DeckCalibrationError.BAD_INSTRUMENT_OFFSET
-                elif exceeds and self.can_distinguish_instr_offset():
-                    tform_type = DeckCalibrationError.BAD_DECK_TRANSFORM
-                comparisons[getattr(CalibrationCheckState, jogged_state)] = \
+                if exceeds:
+                    tform_type = self._get_error_source(comparisons,
+                                                        comparison_state)
+                comparisons[getattr(CalibrationCheckState,
+                                    comparison_state)] = \
                     ComparisonStatus(differenceVector=(jogged_pt - ref_pt),
                                      thresholdVector=threshold_vector,
                                      exceedsThreshold=exceeds,
