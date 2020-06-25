@@ -55,3 +55,9 @@ dev-shell:
 	wait-on http-get://localhost:$(PORT)
 	$(MAKE) -C $(shell_dir) dev
 
+# end to end tests
+.PHONY: test-e2e
+test-e2e:
+	concurrently --no-color --kill-others --success first --names "app-server,app-tests" \
+	"$(MAKE) dev OT_APP_UI__EXTERNAL_BROWSER=1" \
+	"wait-on http://localhost:8090/ && cypress run --browser chrome --headless --record false"
