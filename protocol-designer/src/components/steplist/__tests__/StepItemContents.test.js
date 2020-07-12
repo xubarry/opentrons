@@ -122,7 +122,6 @@ describe('StepItemContents', () => {
       }
       const wrapper = shallow(<StepItemContents {...temperatureProps} />)
       const component = wrapper.find(ModuleStepItems)
-      expect(component.prop('labwareDisplayName')).toEqual('')
       expect(component.prop('labwareNickname')).toEqual('temperature nickname')
     })
   })
@@ -163,7 +162,6 @@ describe('StepItemContents', () => {
       expect(component).toHaveLength(1)
       expect(component.prop('action')).toEqual('pause until')
       expect(component.prop('actionText')).toEqual('45 °C')
-      expect(component.prop('labwareDisplayName')).toEqual('')
       expect(component.prop('labwareNickname')).toEqual('temperature nickname')
     })
   })
@@ -205,7 +203,6 @@ describe('StepItemContents', () => {
       const component = wrapper.find(ModuleStepItems)
       expect(component).toHaveLength(1)
 
-      expect(component.prop('labwareDisplayName')).toEqual('')
       expect(component.prop('labwareNickname')).toEqual('tc nickname')
       expect(component.prop('message')).toEqual('message')
       expect(component.prop('action')).toEqual('hold')

@@ -124,17 +124,6 @@ const makeDurationText = (
   return `${minutesText}${durationSeconds || 0}s`
 }
 
-const getSingleLabwareNameProps = (
-  labwareNickname?: ?string,
-  labwareDisplayName?: ?string
-) => {
-  // Only display one name per labware
-  // Nickname if a labware has one, labware type if labware has no nickname
-  labwareNickname = labwareNickname || ''
-  labwareDisplayName = labwareNickname ? '' : labwareDisplayName
-  return { labwareNickname, labwareDisplayName }
-}
-
 type ProfileStepSubstepRowProps = {|
   step: ProfileStepItem,
   repetitionsDisplay: ?string,
@@ -247,7 +236,6 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
   if (substeps && substeps.substepType === 'magnet') {
     return (
       <ModuleStepItems
-        labwareDisplayName={substeps.labwareDisplayName}
         labwareNickname={substeps.labwareNickname}
         message={substeps.message}
         action={i18n.t(`modules.actions.action`)}
@@ -268,10 +256,7 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
         action={i18n.t(`modules.actions.go_to`)}
         actionText={temperature}
         moduleType={TEMPERATURE_MODULE_TYPE}
-        {...getSingleLabwareNameProps(
-          substeps.labwareNickname,
-          substeps.labwareDisplayName
-        )}
+        labwareNickname={substeps.labwareNickname}
       />
     )
   }
@@ -286,10 +271,7 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
         action={i18n.t(`modules.actions.profile`)}
         actionText={i18n.t(`modules.actions.cycling`)}
         moduleType={THERMOCYCLER_MODULE_TYPE}
-        {...getSingleLabwareNameProps(
-          substeps.labwareNickname,
-          substeps.labwareDisplayName
-        )}
+        labwareNickname={substeps.labwareNickname}
       >
         <ModuleStepItemRow label={lidLabelText} value={lidTemperature} />
         <CollapsibleSubstep
@@ -342,10 +324,7 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
             actionText={makeTemperatureText(substeps.blockTargetTempHold)}
             moduleType={THERMOCYCLER_MODULE_TYPE}
             hideHeader
-            {...getSingleLabwareNameProps(
-              substeps.labwareNickname,
-              substeps.labwareDisplayName
-            )}
+            labwareNickname={substeps.labwareNickname}
           />
           <ModuleStepItemRow
             label={`Lid (${substeps.lidOpenHold ? 'open' : 'closed'})`}
@@ -367,10 +346,7 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
         action={i18n.t(`modules.actions.hold`)}
         actionText={blockTemperature}
         moduleType={THERMOCYCLER_MODULE_TYPE}
-        {...getSingleLabwareNameProps(
-          substeps.labwareNickname,
-          substeps.labwareDisplayName
-        )}
+        labwareNickname={substeps.labwareNickname}
       >
         <ModuleStepItemRow label={lidLabelText} value={lidTemperature} />
       </ModuleStepItems>
@@ -386,10 +362,7 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
         action={i18n.t('modules.actions.await_temperature')}
         actionText={temperature}
         moduleType={TEMPERATURE_MODULE_TYPE}
-        {...getSingleLabwareNameProps(
-          substeps.labwareNickname,
-          substeps.labwareDisplayName
-        )}
+        labwareNickname={substeps.labwareNickname}
       />
     )
   }
@@ -421,10 +394,7 @@ export const StepItemContents = (props: StepItemContentsProps): React.Node => {
         key="mix-header"
         volume={rawForm.volume}
         times={rawForm.times}
-        {...getSingleLabwareNameProps(
-          labwareNicknamesById[mixLabwareId],
-          labwareDefDisplayNamesById[mixLabwareId]
-        )}
+        labwareNickname={labwareNicknamesById[mixLabwareId]}
       />
     )
   }

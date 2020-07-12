@@ -13,20 +13,13 @@ import { LabwareTooltipContents } from './LabwareTooltipContents'
 
 type AspirateDispenseHeaderProps = {
   sourceLabwareNickname: ?string,
-  sourceLabwareDefDisplayName: ?string,
   destLabwareNickname: ?string,
-  destLabwareDefDisplayName: ?string,
 }
 
 export function AspirateDispenseHeader(
   props: AspirateDispenseHeaderProps
 ): React.Node {
-  const {
-    sourceLabwareNickname,
-    sourceLabwareDefDisplayName,
-    destLabwareNickname,
-    destLabwareDefDisplayName,
-  } = props
+  const { sourceLabwareNickname, destLabwareNickname } = props
 
   const [sourceTargetProps, sourceTooltipProps] = useHoverTooltip({
     placement: 'bottom-start',
@@ -47,17 +40,11 @@ export function AspirateDispenseHeader(
       </li>
 
       <Tooltip {...sourceTooltipProps}>
-        <LabwareTooltipContents
-          labwareNickname={sourceLabwareNickname}
-          labwareDefDisplayName={sourceLabwareDefDisplayName}
-        />
+        <LabwareTooltipContents labwareNickname={sourceLabwareNickname} />
       </Tooltip>
 
       <Tooltip {...destTooltipProps}>
-        <LabwareTooltipContents
-          labwareNickname={destLabwareNickname}
-          labwareDefDisplayName={destLabwareDefDisplayName}
-        />
+        <LabwareTooltipContents labwareNickname={destLabwareNickname} />
       </Tooltip>
 
       <PDListItem
