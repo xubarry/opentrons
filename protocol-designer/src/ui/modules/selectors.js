@@ -1,7 +1,6 @@
 // @flow
 import { createSelector } from 'reselect'
 import {
-  getLabwareDisplayName,
   MAGNETIC_MODULE_TYPE,
   TEMPERATURE_MODULE_TYPE,
   THERMOCYCLER_MODULE_TYPE,
@@ -20,7 +19,7 @@ import type { Options } from '@opentrons/components'
 import type { Selector } from '../../types'
 
 export const getLabwareNamesByModuleId: Selector<{
-  [moduleId: string]: ?{ nickname: ?string, displayName: string },
+  [moduleId: string]: ?{ nickname: string },
 }> = createSelector(
   getInitialDeckSetup,
   getLabwareNicknamesById,
@@ -30,7 +29,6 @@ export const getLabwareNamesByModuleId: Selector<{
       return labware
         ? {
             nickname: nicknamesById[labware.id],
-            displayName: getLabwareDisplayName(labware.def),
           }
         : null
     })

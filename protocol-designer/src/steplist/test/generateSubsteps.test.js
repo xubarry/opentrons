@@ -17,16 +17,13 @@ describe('generateSubsteps', () => {
 
     labwareNamesByModuleId = {
       magnet123: {
-        displayName: 'magnet module',
-        nickname: null,
+        nickname: 'magnet module',
       },
       tempId: {
-        displayName: 'temperature module',
-        nickname: null,
+        nickname: 'temperature module',
       },
       thermocyclerModuleId: {
-        displayName: 'tc labware',
-        nickname: 'tc labware nickname',
+        nickname: 'tc labware',
       },
     }
     robotState = makeInitialRobotState({
@@ -510,8 +507,7 @@ describe('generateSubsteps', () => {
     expect(result).toEqual({
       substepType: 'magnet',
       engage: true,
-      labwareDisplayName: 'magnet module',
-      labwareNickname: null,
+      labwareNickname: 'magnet module',
       message: null,
     })
   })
@@ -537,8 +533,7 @@ describe('generateSubsteps', () => {
     expect(result).toEqual({
       substepType: 'magnet',
       engage: false,
-      labwareDisplayName: 'magnet module',
-      labwareNickname: null,
+      labwareNickname: 'magnet module',
       message: null,
     })
   })
@@ -565,8 +560,7 @@ describe('generateSubsteps', () => {
     expect(result).toEqual({
       substepType: 'temperature',
       temperature: 45,
-      labwareDisplayName: 'temperature module',
-      labwareNickname: null,
+      labwareNickname: 'temperature module',
       message: null,
     })
   })
@@ -593,8 +587,7 @@ describe('generateSubsteps', () => {
     expect(result).toEqual({
       substepType: 'temperature',
       temperature: 0,
-      labwareDisplayName: 'temperature module',
-      labwareNickname: null,
+      labwareNickname: 'temperature module',
       message: null,
     })
   })
@@ -620,8 +613,7 @@ describe('generateSubsteps', () => {
     expect(result).toEqual({
       substepType: 'temperature',
       temperature: null,
-      labwareDisplayName: 'temperature module',
-      labwareNickname: null,
+      labwareNickname: 'temperature module',
       message: null,
     })
   })
@@ -647,8 +639,7 @@ describe('generateSubsteps', () => {
     )
     expect(result).toEqual({
       substepType: THERMOCYCLER_STATE,
-      labwareDisplayName: 'tc labware',
-      labwareNickname: 'tc labware nickname',
+      labwareNickname: 'tc labware',
       blockTargetTemp: 44,
       lidTargetTemp: 66,
       lidOpen: false,

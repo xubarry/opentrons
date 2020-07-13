@@ -32,7 +32,6 @@ describe('StepItemContents', () => {
         substeps: {
           substepType: stepType,
           engage: true,
-          labwareDisplayName: 'magnet display',
           labwareNickname: 'magnet nickname',
           message: 'message',
         },
@@ -88,7 +87,6 @@ describe('StepItemContents', () => {
       temperatureProps.substeps = {
         substepType: stepType,
         temperature: 45,
-        labwareDisplayName: 'temperature display',
         labwareNickname: 'temperature nickname',
         message: 'message',
       }
@@ -102,7 +100,6 @@ describe('StepItemContents', () => {
       temperatureProps.substeps = {
         substepType: stepType,
         temperature: null,
-        labwareDisplayName: 'temperature display',
         labwareNickname: 'temperature nickname',
         message: 'message',
       }
@@ -116,7 +113,6 @@ describe('StepItemContents', () => {
       temperatureProps.substeps = {
         substepType: stepType,
         temperature: null,
-        labwareDisplayName: 'temperature display',
         labwareNickname: 'temperature nickname',
         message: 'message',
       }
@@ -153,7 +149,6 @@ describe('StepItemContents', () => {
       awaitTemperatureProps.substeps = {
         substepType: stepType,
         temperature: 45,
-        labwareDisplayName: 'temperature display',
         labwareNickname: 'temperature nickname',
         message: 'message',
       }
@@ -195,7 +190,6 @@ describe('StepItemContents', () => {
         blockTargetTemp: 55,
         lidTargetTemp: 45,
         lidOpen: false,
-        labwareDisplayName: 'tc display',
         labwareNickname: 'tc nickname',
         message: 'message',
       }
